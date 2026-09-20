@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+*.db
+data/raw/*
+!data/raw/.gitkeep
+data/labeled/*
+!data/labeled/.gitkeep
+data/calibration/*
+!data/calibration/.gitkeep
+reports/*
+!reports/.gitkeep
+models/*.pt
+models/*.ckpt

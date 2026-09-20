@@ -1,0 +1,60 @@
+inspection:
+  require_all_modules: false # Set true only after all production models are configured.
+  max_parallel_workers: 3
+calibration:
+  px_per_mm: null # Calibrate before dimensional inspection in production.
+  known_size_mm: 10.0
+camera:
+  mode: simulation # simulation | opencv | basler | plc
+  camera1_index: 0
+  camera2_index: 1
+  capture_timeout_seconds: 2.0
+  frame_selection:
+    manufacture_window_start_seconds: 14.0
+    manufacture_window_end_seconds: 15.0
+    minimum_sharpness: 50.0
+yolo_detect:
+  enabled: false
+  checkpoint_path: models/yolo_detect.pt
+  confidence_threshold: 0.50
+  spring_class_id: 0
+  image_size: 960
+yolo_pose:
+  enabled: false
+  front_checkpoint_path: models/yolo_pose.pt
+  top_checkpoint_path: models/yolo_pose.pt
+  confidence_threshold: 0.50
+  image_size: 960
+  keypoint_names: [pt1, pt2, pt3, pt4, pt5, pt6, pt7]
+patchcore:
+  enabled: false
+  checkpoint_path: models/patchcore/Patchcore/spring/v0/weights/lightning/model.ckpt
+  anomaly_threshold: 0.5
+dimensions:
+  top_coil_count: 6
+  bottom_coil_count: 6
+module3_hook_angle:
+  expected_separation_degrees: 180.0 # Opposite hook directions are nominal.
+  max_angle_error_degrees: 15.0
+total_length:
+  nominal: 120.0
+  min: null # Fill from repeated good-spring caliper measurements.
+  max: null
+top_coil_height:
+  min: null
+  max: null
+bottom_coil_height:
+  min: null
+  max: null
+shaft_length:
+  min: null
+  max: null
+shaft_straightness:
+  max_deviation: null
+pitch_per_coil:
+  min: null
+  max: null
+coil_outer_diameter:
+  nominal: 10.98
+  min: null
+  max: null

@@ -1,0 +1,1 @@
+"""Spring inspection application package."""
