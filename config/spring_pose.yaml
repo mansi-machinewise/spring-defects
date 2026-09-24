@@ -1,0 +1,19 @@
+path: D:/spring-defects/data/yolo_pose
+
+train: train/images
+val: val/images
+test: test/images
+
+kpt_shape: [7, 3]
+
+names:
+    0: spring
+
+kpt_names: 
+    0: hook_tip_top
+    1: top_coil
+    2: bottom_top_coil
+    3: shaft_middle
+    4: top_bottom_coil
+    5: bottom_bottom_coil
+    6: hook_tip_bottom
