@@ -6,11 +6,11 @@ from ultralytics import YOLO
 def main() -> None:
     data       = "D:/spring-defects/config/spring_pose.yaml"
     base_model = "yolo11n-pose.pt"
-    epochs     = 200
-    imgsz      = 960
+    epochs     = 300
+    imgsz      = 1280
     batch      = 16
     device     = "0"
-    name       = "spring_pose_v6"
+    name       = "spring_pose_v7"
 
 
     YOLO(base_model).train(
@@ -23,7 +23,7 @@ def main() -> None:
         name=name,
         pose=12.0,
         kobj=2.0,
-        patience=50,
+        patience=100,
         optimizer="AdamW",
         cos_lr=True,
         save_period=50,
