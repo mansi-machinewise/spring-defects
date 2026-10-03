@@ -9,5 +9,4 @@ data/
 reports/*
 !reports/.gitkeep
 
-models/*.pt
 models/*.ckpt
