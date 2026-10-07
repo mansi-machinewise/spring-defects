@@ -1,0 +1,106 @@
+# Spring Defects Inspection System
+# System Configuration
+
+project:
+  name: spring-defects
+  version: "1.0"
+  camera: Camera 1
+
+# ── Model ──────────────────────────────────────────────────────
+model:
+  architecture: YOLO11n-pose
+  version: v6-2
+  weights: runs/pose/spring_pose_v6-2/weights/best.pt
+  input_size: 960
+  device: "0"
+  keypoints: 7
+  keypoint_names:
+    0: hook_tip_top
+    1: top_coil
+    2: bottom_top_coil
+    3: shaft_middle
+    4: top_bottom_coil
+    5: bottom_bottom_coil
+    6: hook_tip_bottom
+
+# ── Classifier ─────────────────────────────────────────────────
+classifier:
+  type: RandomForest
+  weights: runs/features/classifier.pkl
+  features: 26
+  feature_breakdown:
+    geometric: 13
+    normalized_keypoints: 14
+  thresholds:
+    bad: 0.80          # above this → AUTO REJECT
+    manual_check: 0.50 # above this → MANUAL CHECK
+                       # below this → AUTO PASS
+
+# ── Performance ────────────────────────────────────────────────
+performance:
+  training:
+    images: 500
+    good: 250
+    bad: 250
+    cross_val_folds: 5
+    accuracy: 93.8%
+    precision: 97.0%
+    recall: 91.6%
+  test:
+    images: 50
+    good: 33
+    bad: 17
+    recall: 100.0%
+    false_positives: 9
+    manual_check_zone: 7
+
+# ── Keypoint model performance ─────────────────────────────────
+keypoint_model:
+  val_mAP50: 0.995
+  val_mAP50_95: 0.995
+  test_mean_pixel_error: 46.90
+  test_images: 50
+  training_images: 500
+  epochs_trained: 134
+
+# ── Dataset ────────────────────────────────────────────────────
+dataset:
+  train:
+    path: data/yolo_pose/train/images
+    count: 250
+    format: .jpeg
+    resolution: 2400x3200
+  extra:
+    path: data/yolo_pose/extra/images
+    count: 250
+    format: .jpeg / .jpg
+    resolution: 2400x3200
+  val:
+    path: data/yolo_pose/val/images
+    count: 63
+  test:
+    path: data/yolo_pose/test/images
+    count: 62
+    resolution: mixed
+
+# ── Defect types ───────────────────────────────────────────────
+defects:
+  camera_1_visible:
+    - hook_open
+    - shaft_bent
+    - hook_alignment_visible
+    - spring_too_long
+  camera_1_invisible:
+    - hook_alignment_angle  # requires Camera 2
+
+# ── Three-tier inspection ──────────────────────────────────────
+inspection:
+  auto_pass:
+    condition: BAD probability < 0.50
+    action: ship to customer
+  manual_check:
+    condition: BAD probability 0.50 - 0.80
+    action: human visual inspection
+  auto_reject:
+    condition: BAD probability > 0.80
+    action: reject / scrap
