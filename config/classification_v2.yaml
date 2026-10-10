@@ -1,0 +1,11 @@
+experiment: spring_cls_v2
+task: classification
+model: yolo11s-cls.pt
+data: data/yolo_cls
+epochs: 100
+imgsz: 224
+batch: 32
+device: 0
+pretrained: true
+change_from_v1: YOLO11n-cls to YOLO11s-cls
+purpose: test whether increased model capacity improves generalization

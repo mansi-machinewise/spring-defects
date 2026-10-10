@@ -1,0 +1,16 @@
+experiment: spring_cls_v1
+task: classification
+model: yolo11n-cls.pt
+data: data/yolo_cls
+epochs: 100
+imgsz: 224
+batch: 32
+device: 0
+pretrained: true
+
+results:
+  test_accuracy: 0.8889
+  defective_recall: 1.0
+  good_recall: 0.8
+  defective_missed: 0
+  good_false_rejections: 5

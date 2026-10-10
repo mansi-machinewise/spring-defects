@@ -1,0 +1,29 @@
+experiment: spring_cls_v4
+task: classification
+
+model: yolo11s-cls.pt
+data: data/yolo_cls
+
+epochs: 100
+imgsz: 224
+batch: 32
+device: 0
+pretrained: true
+
+# Controlled geometric augmentation experiment
+augmentation:
+  degrees: 5.0
+  translate: 0.15
+  scale: 0.6
+
+  # Keep physically meaningful appearance augmentation
+  fliplr: 0.5
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+
+  auto_augment: randaugment
+  erasing: 0.4
+
+purpose: improve_generalization_with_geometric_variation
+change_from_v3: add_rotation_and_increase_translation_scale

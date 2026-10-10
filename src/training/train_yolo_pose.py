@@ -23,7 +23,11 @@ def main() -> None:
         name=name,
         pose=12.0,
         kobj=2.0,
-        patience=100,
+<<<<<<< Updated upstream
+        patience=200,
+=======
+        patience=200,
+>>>>>>> Stashed changes
         optimizer="AdamW",
         cos_lr=True,
         save_period=50,
