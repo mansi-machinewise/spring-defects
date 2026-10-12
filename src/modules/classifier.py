@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 from ultralytics import YOLO
 
-DEFAULT_WEIGHTS = "runs/classify/spring_cls_v1/weights/best.pt"
+DEFAULT_WEIGHTS = "runs/classify/spring_cls_v4/weights/best.pt"
 GOOD_LABELS = {"GOOD", "OK", "PASS"}
 
 
