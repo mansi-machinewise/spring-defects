@@ -370,14 +370,34 @@ function selectBatchItem(idx) {
   if (!batchData[idx]) return;
   activeBatchIdx=idx;
   [...sidebarList.children].forEach((c,i)=>c.classList.toggle('active',i===idx));
+  // Scroll active sidebar item into view
+  const activeEl = sidebarList.children[idx];
+  if (activeEl) activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
   const r=batchData[idx];
+  const total=batchData.length;
   detailPlaceholder.classList.add('hidden');
   detailContent.classList.remove('hidden');
+
+  const navBar = `
+    <div class="batch-nav-bar">
+      <button class="batch-nav-btn" id="batchPrevBtn" ${idx===0?'disabled':''}>
+        <i class="fa-solid fa-chevron-left"></i> Prev
+      </button>
+      <span class="batch-nav-counter">${idx+1} / ${total}</span>
+      <button class="batch-nav-btn" id="batchNextBtn" ${idx===total-1?'disabled':''}>
+        Next <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>`;
+
   if (r.error) {
-    detailContent.innerHTML=`<div style="padding:24px;color:var(--bad)"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${r.error}</div>`;
-    return;
+    detailContent.innerHTML = navBar + `<div style="padding:24px;color:var(--bad)"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${r.error}</div>`;
+  } else {
+    detailContent.innerHTML = navBar + buildResultCard(r.dataURL, r.apiResult, r.springId);
   }
-  detailContent.innerHTML = buildResultCard(r.dataURL, r.apiResult, r.springId);
+
+  document.getElementById('batchPrevBtn').addEventListener('click', () => selectBatchItem(activeBatchIdx - 1));
+  document.getElementById('batchNextBtn').addEventListener('click', () => selectBatchItem(activeBatchIdx + 1));
 }
 
 // CSV Export

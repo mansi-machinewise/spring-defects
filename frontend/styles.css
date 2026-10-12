@@ -664,3 +664,46 @@ ul{list-style:none;}
 .result-value.good { color: var(--good, #4ade80); }
 .result-value.bad  { color: var(--bad,  #f87171); }
 .result-value.mono { font-family: 'JetBrains Mono', monospace; font-size: .85rem; }
+
+/* ── Batch Prev / Next navigation ── */
+.batch-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border, #2e333b);
+  background: var(--surface, var(--card-bg, #1e2127));
+  border-radius: 12px 12px 0 0;
+  margin-top: 16px;
+}
+.batch-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border: 1px solid var(--border, #2e333b);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-1, #e8eaed);
+  font-size: .85rem;
+  cursor: pointer;
+  transition: background .15s;
+}
+.batch-nav-btn:hover:not(:disabled) {
+  background: var(--hover, rgba(255,255,255,.07));
+}
+.batch-nav-btn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+.batch-nav-counter {
+  font-size: .85rem;
+  color: var(--text-2, #9aa0a6);
+  font-variant-numeric: tabular-nums;
+}
+/* Remove top radius from result card when nav bar is above it */
+.batch-nav-bar + .result-card {
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  margin-top: 0;
+}
