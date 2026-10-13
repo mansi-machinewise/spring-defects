@@ -1,0 +1,818 @@
+[
+  {
+    "image": "spring_001.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 509.7,
+        "pred_y": 141.5,
+        "pred_conf": 0.9385,
+        "gt_x": 480.2,
+        "gt_y": 172.6,
+        "error_px": 42.86
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 591.4,
+        "pred_y": 182.0,
+        "pred_conf": 0.9899,
+        "gt_x": 564.9,
+        "gt_y": 184.6,
+        "error_px": 26.61
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 657.3,
+        "pred_y": 366.5,
+        "pred_conf": 1.0,
+        "gt_x": 662.5,
+        "gt_y": 396.0,
+        "error_px": 29.97
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 656.7,
+        "pred_y": 786.1,
+        "pred_conf": 1.0,
+        "gt_x": 661.4,
+        "gt_y": 796.6,
+        "error_px": 11.45
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 646.2,
+        "pred_y": 1235.0,
+        "pred_conf": 1.0,
+        "gt_x": 662.8,
+        "gt_y": 1206.0,
+        "error_px": 33.4
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 561.1,
+        "pred_y": 1442.8,
+        "pred_conf": 0.9799,
+        "gt_x": 560.5,
+        "gt_y": 1467.3,
+        "error_px": 24.54
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 463.5,
+        "pred_y": 1484.5,
+        "pred_conf": 0.9749,
+        "gt_x": 464.9,
+        "gt_y": 1478.5,
+        "error_px": 6.16
+      }
+    ]
+  },
+  {
+    "image": "spring_002.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 573.0,
+        "pred_y": 182.5,
+        "pred_conf": 0.9593,
+        "gt_x": 560.6,
+        "gt_y": 201.6,
+        "error_px": 22.76
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 662.1,
+        "pred_y": 214.9,
+        "pred_conf": 0.9928,
+        "gt_x": 639.5,
+        "gt_y": 206.0,
+        "error_px": 24.21
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 742.4,
+        "pred_y": 388.3,
+        "pred_conf": 0.9999,
+        "gt_x": 754.2,
+        "gt_y": 390.5,
+        "error_px": 11.94
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 762.3,
+        "pred_y": 800.2,
+        "pred_conf": 0.9999,
+        "gt_x": 762.8,
+        "gt_y": 827.5,
+        "error_px": 27.31
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 773.5,
+        "pred_y": 1245.8,
+        "pred_conf": 1.0,
+        "gt_x": 770.9,
+        "gt_y": 1232.8,
+        "error_px": 13.26
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 697.2,
+        "pred_y": 1453.6,
+        "pred_conf": 0.9794,
+        "gt_x": 674.9,
+        "gt_y": 1479.7,
+        "error_px": 34.38
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 600.1,
+        "pred_y": 1490.5,
+        "pred_conf": 0.9717,
+        "gt_x": 590.4,
+        "gt_y": 1472.5,
+        "error_px": 20.41
+      }
+    ]
+  },
+  {
+    "image": "spring_003.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 532.3,
+        "pred_y": 153.8,
+        "pred_conf": 0.9375,
+        "gt_x": 513.0,
+        "gt_y": 185.1,
+        "error_px": 36.74
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 617.0,
+        "pred_y": 198.3,
+        "pred_conf": 0.9885,
+        "gt_x": 592.1,
+        "gt_y": 181.3,
+        "error_px": 30.17
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 682.2,
+        "pred_y": 377.3,
+        "pred_conf": 1.0,
+        "gt_x": 703.4,
+        "gt_y": 376.6,
+        "error_px": 21.24
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 700.7,
+        "pred_y": 794.0,
+        "pred_conf": 1.0,
+        "gt_x": 703.6,
+        "gt_y": 790.7,
+        "error_px": 4.38
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 703.1,
+        "pred_y": 1245.0,
+        "pred_conf": 1.0,
+        "gt_x": 704.9,
+        "gt_y": 1214.5,
+        "error_px": 30.53
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 633.0,
+        "pred_y": 1449.2,
+        "pred_conf": 0.9805,
+        "gt_x": 606.4,
+        "gt_y": 1459.5,
+        "error_px": 28.44
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 532.1,
+        "pred_y": 1502.3,
+        "pred_conf": 0.9754,
+        "gt_x": 521.9,
+        "gt_y": 1451.6,
+        "error_px": 51.7
+      }
+    ]
+  },
+  {
+    "image": "spring_006.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 501.4,
+        "pred_y": 147.5,
+        "pred_conf": 0.9433,
+        "gt_x": 490.5,
+        "gt_y": 172.9,
+        "error_px": 27.68
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 584.6,
+        "pred_y": 189.3,
+        "pred_conf": 0.9903,
+        "gt_x": 577.3,
+        "gt_y": 178.4,
+        "error_px": 13.14
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 654.5,
+        "pred_y": 371.5,
+        "pred_conf": 1.0,
+        "gt_x": 674.9,
+        "gt_y": 395.8,
+        "error_px": 31.79
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 668.7,
+        "pred_y": 783.4,
+        "pred_conf": 1.0,
+        "gt_x": 674.9,
+        "gt_y": 793.4,
+        "error_px": 11.74
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 671.5,
+        "pred_y": 1227.8,
+        "pred_conf": 1.0,
+        "gt_x": 685.2,
+        "gt_y": 1203.0,
+        "error_px": 28.41
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 601.7,
+        "pred_y": 1431.9,
+        "pred_conf": 0.9808,
+        "gt_x": 586.2,
+        "gt_y": 1453.4,
+        "error_px": 26.56
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 502.2,
+        "pred_y": 1479.6,
+        "pred_conf": 0.9732,
+        "gt_x": 488.2,
+        "gt_y": 1475.6,
+        "error_px": 14.56
+      }
+    ]
+  },
+  {
+    "image": "spring_007.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 561.1,
+        "pred_y": 149.4,
+        "pred_conf": 0.9373,
+        "gt_x": 544.5,
+        "gt_y": 179.0,
+        "error_px": 34.01
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 644.4,
+        "pred_y": 193.1,
+        "pred_conf": 0.9891,
+        "gt_x": 630.9,
+        "gt_y": 177.4,
+        "error_px": 20.73
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 707.9,
+        "pred_y": 374.3,
+        "pred_conf": 1.0,
+        "gt_x": 726.2,
+        "gt_y": 408.1,
+        "error_px": 38.39
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 715.4,
+        "pred_y": 796.5,
+        "pred_conf": 1.0,
+        "gt_x": 722.7,
+        "gt_y": 815.5,
+        "error_px": 20.38
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 712.7,
+        "pred_y": 1253.4,
+        "pred_conf": 1.0,
+        "gt_x": 723.5,
+        "gt_y": 1227.9,
+        "error_px": 27.69
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 632.2,
+        "pred_y": 1461.4,
+        "pred_conf": 0.9794,
+        "gt_x": 621.0,
+        "gt_y": 1478.3,
+        "error_px": 20.26
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 533.5,
+        "pred_y": 1507.4,
+        "pred_conf": 0.9741,
+        "gt_x": 525.0,
+        "gt_y": 1490.8,
+        "error_px": 18.63
+      }
+    ]
+  },
+  {
+    "image": "spring_008.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 457.2,
+        "pred_y": 184.6,
+        "pred_conf": 0.9682,
+        "gt_x": 437.2,
+        "gt_y": 203.7,
+        "error_px": 27.68
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 545.6,
+        "pred_y": 197.8,
+        "pred_conf": 0.9924,
+        "gt_x": 520.4,
+        "gt_y": 192.8,
+        "error_px": 25.73
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 641.9,
+        "pred_y": 378.8,
+        "pred_conf": 0.9999,
+        "gt_x": 659.0,
+        "gt_y": 396.8,
+        "error_px": 24.83
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 655.4,
+        "pred_y": 790.8,
+        "pred_conf": 1.0,
+        "gt_x": 723.6,
+        "gt_y": 799.8,
+        "error_px": 68.79
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 665.2,
+        "pred_y": 1213.0,
+        "pred_conf": 1.0,
+        "gt_x": 716.2,
+        "gt_y": 1212.6,
+        "error_px": 51.09
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 571.5,
+        "pred_y": 1427.8,
+        "pred_conf": 0.9539,
+        "gt_x": 582.0,
+        "gt_y": 1456.3,
+        "error_px": 30.28
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 479.4,
+        "pred_y": 1451.8,
+        "pred_conf": 0.9427,
+        "gt_x": 490.1,
+        "gt_y": 1456.1,
+        "error_px": 11.53
+      }
+    ]
+  },
+  {
+    "image": "spring_009.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 425.5,
+        "pred_y": 147.8,
+        "pred_conf": 0.9517,
+        "gt_x": 405.4,
+        "gt_y": 167.1,
+        "error_px": 27.95
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 514.5,
+        "pred_y": 183.9,
+        "pred_conf": 0.991,
+        "gt_x": 492.1,
+        "gt_y": 178.9,
+        "error_px": 22.93
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 588.5,
+        "pred_y": 364.4,
+        "pred_conf": 1.0,
+        "gt_x": 587.1,
+        "gt_y": 369.5,
+        "error_px": 5.23
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 595.7,
+        "pred_y": 784.3,
+        "pred_conf": 1.0,
+        "gt_x": 599.3,
+        "gt_y": 781.2,
+        "error_px": 4.7
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 598.3,
+        "pred_y": 1230.7,
+        "pred_conf": 1.0,
+        "gt_x": 616.4,
+        "gt_y": 1204.8,
+        "error_px": 31.62
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 513.3,
+        "pred_y": 1444.8,
+        "pred_conf": 0.9736,
+        "gt_x": 521.3,
+        "gt_y": 1445.3,
+        "error_px": 8.05
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 416.7,
+        "pred_y": 1482.1,
+        "pred_conf": 0.9676,
+        "gt_x": 434.7,
+        "gt_y": 1424.6,
+        "error_px": 60.23
+      }
+    ]
+  },
+  {
+    "image": "spring_010.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 453.6,
+        "pred_y": 191.1,
+        "pred_conf": 0.9562,
+        "gt_x": 415.5,
+        "gt_y": 207.3,
+        "error_px": 41.43
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 534.8,
+        "pred_y": 217.8,
+        "pred_conf": 0.9925,
+        "gt_x": 504.0,
+        "gt_y": 217.3,
+        "error_px": 30.79
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 617.4,
+        "pred_y": 399.8,
+        "pred_conf": 0.9999,
+        "gt_x": 601.6,
+        "gt_y": 404.4,
+        "error_px": 16.45
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 621.5,
+        "pred_y": 814.5,
+        "pred_conf": 1.0,
+        "gt_x": 612.2,
+        "gt_y": 815.6,
+        "error_px": 9.39
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 622.5,
+        "pred_y": 1252.6,
+        "pred_conf": 1.0,
+        "gt_x": 631.7,
+        "gt_y": 1239.4,
+        "error_px": 16.04
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 533.7,
+        "pred_y": 1464.0,
+        "pred_conf": 0.9769,
+        "gt_x": 530.3,
+        "gt_y": 1482.5,
+        "error_px": 18.81
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 439.8,
+        "pred_y": 1492.7,
+        "pred_conf": 0.9683,
+        "gt_x": 444.1,
+        "gt_y": 1455.9,
+        "error_px": 37.04
+      }
+    ]
+  },
+  {
+    "image": "spring_011.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 527.4,
+        "pred_y": 138.1,
+        "pred_conf": 0.9586,
+        "gt_x": 551.7,
+        "gt_y": 105.6,
+        "error_px": 40.64
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 618.3,
+        "pred_y": 175.2,
+        "pred_conf": 0.9924,
+        "gt_x": 632.3,
+        "gt_y": 151.0,
+        "error_px": 27.97
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 697.6,
+        "pred_y": 358.6,
+        "pred_conf": 1.0,
+        "gt_x": 690.8,
+        "gt_y": 368.6,
+        "error_px": 12.12
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 708.8,
+        "pred_y": 790.5,
+        "pred_conf": 1.0,
+        "gt_x": 710.8,
+        "gt_y": 773.0,
+        "error_px": 17.59
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 713.1,
+        "pred_y": 1250.5,
+        "pred_conf": 1.0,
+        "gt_x": 745.9,
+        "gt_y": 1215.7,
+        "error_px": 47.82
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 627.6,
+        "pred_y": 1471.3,
+        "pred_conf": 0.9723,
+        "gt_x": 658.3,
+        "gt_y": 1478.9,
+        "error_px": 31.55
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 530.1,
+        "pred_y": 1507.4,
+        "pred_conf": 0.9646,
+        "gt_x": 564.1,
+        "gt_y": 1486.3,
+        "error_px": 39.99
+      }
+    ]
+  },
+  {
+    "image": "spring_012.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 220.2,
+        "pred_y": 105.3,
+        "pred_conf": 0.9665,
+        "gt_x": 243.3,
+        "gt_y": 76.9,
+        "error_px": 36.56
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 312.1,
+        "pred_y": 146.1,
+        "pred_conf": 0.9944,
+        "gt_x": 325.2,
+        "gt_y": 122.7,
+        "error_px": 26.75
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 394.9,
+        "pred_y": 329.0,
+        "pred_conf": 1.0,
+        "gt_x": 378.7,
+        "gt_y": 346.5,
+        "error_px": 23.84
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 409.6,
+        "pred_y": 766.7,
+        "pred_conf": 1.0,
+        "gt_x": 406.2,
+        "gt_y": 755.1,
+        "error_px": 12.13
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 416.8,
+        "pred_y": 1230.1,
+        "pred_conf": 1.0,
+        "gt_x": 445.4,
+        "gt_y": 1196.5,
+        "error_px": 44.15
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 334.3,
+        "pred_y": 1461.1,
+        "pred_conf": 0.9744,
+        "gt_x": 369.3,
+        "gt_y": 1464.1,
+        "error_px": 35.18
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 236.4,
+        "pred_y": 1494.7,
+        "pred_conf": 0.9641,
+        "gt_x": 275.4,
+        "gt_y": 1466.4,
+        "error_px": 48.19
+      }
+    ]
+  },
+  {
+    "image": "spring_013.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 559.1,
+        "pred_y": 191.5,
+        "pred_conf": 0.9769,
+        "gt_x": 541.6,
+        "gt_y": 192.8,
+        "error_px": 17.6
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 638.4,
+        "pred_y": 202.2,
+        "pred_conf": 0.9949,
+        "gt_x": 621.4,
+        "gt_y": 190.6,
+        "error_px": 20.57
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 737.0,
+        "pred_y": 382.7,
+        "pred_conf": 1.0,
+        "gt_x": 735.7,
+        "gt_y": 379.3,
+        "error_px": 3.59
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 743.0,
+        "pred_y": 797.8,
+        "pred_conf": 1.0,
+        "gt_x": 746.1,
+        "gt_y": 793.4,
+        "error_px": 5.39
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 752.2,
+        "pred_y": 1230.4,
+        "pred_conf": 1.0,
+        "gt_x": 759.8,
+        "gt_y": 1207.3,
+        "error_px": 24.32
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 649.6,
+        "pred_y": 1447.3,
+        "pred_conf": 0.9308,
+        "gt_x": 667.1,
+        "gt_y": 1442.0,
+        "error_px": 18.3
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 562.5,
+        "pred_y": 1453.0,
+        "pred_conf": 0.895,
+        "gt_x": 582.2,
+        "gt_y": 1442.5,
+        "error_px": 22.29
+      }
+    ]
+  },
+  {
+    "image": "spring_014.jpeg",
+    "keypoints": [
+      {
+        "name": "hook_tip_top",
+        "pred_x": 526.5,
+        "pred_y": 149.2,
+        "pred_conf": 0.9484,
+        "gt_x": 503.1,
+        "gt_y": 161.5,
+        "error_px": 26.44
+      },
+      {
+        "name": "top_coil",
+        "pred_x": 608.5,
+        "pred_y": 181.3,
+        "pred_conf": 0.9907,
+        "gt_x": 585.8,
+        "gt_y": 170.8,
+        "error_px": 24.96
+      },
+      {
+        "name": "bottom_top_coil",
+        "pred_x": 684.3,
+        "pred_y": 364.1,
+        "pred_conf": 0.9999,
+        "gt_x": 679.8,
+        "gt_y": 355.4,
+        "error_px": 9.78
+      },
+      {
+        "name": "shaft_middle",
+        "pred_x": 691.1,
+        "pred_y": 777.0,
+        "pred_conf": 1.0,
+        "gt_x": 684.6,
+        "gt_y": 787.1,
+        "error_px": 12.02
+      },
+      {
+        "name": "top_bottom_coil",
+        "pred_x": 692.0,
+        "pred_y": 1215.4,
+        "pred_conf": 1.0,
+        "gt_x": 699.8,
+        "gt_y": 1188.3,
+        "error_px": 28.22
+      },
+      {
+        "name": "bottom_bottom_coil",
+        "pred_x": 609.7,
+        "pred_y": 1422.8,
+        "pred_conf": 0.9774,
+        "gt_x": 615.8,
+        "gt_y": 1436.8,
+        "error_px": 15.3
+      },
+      {
+        "name": "hook_tip_bottom",
+        "pred_x": 514.2,
+        "pred_y": 1460.5,
+        "pred_conf": 0.9703,
+        "gt_x": 514.8,
+        "gt_y": 1473.9,
+        "error_px": 13.48
+      }
+    ]
+  }
+]

@@ -1,0 +1,64 @@
+{
+  "image": "spring_008.jpeg",
+  "status": "OK",
+  "bounding_box": [
+    810,
+    183,
+    1567,
+    3159
+  ],
+  "keypoints": {
+    "hook_tip_top": {
+      "x": 1004.0,
+      "y": 451.6,
+      "conf": 0.9964
+    },
+    "top_coil": {
+      "x": 1162.9,
+      "y": 493.2,
+      "conf": 0.9992
+    },
+    "bottom_top_coil": {
+      "x": 1342.4,
+      "y": 852.2,
+      "conf": 1.0
+    },
+    "shaft_middle": {
+      "x": 1350.1,
+      "y": 1610.2,
+      "conf": 1.0
+    },
+    "top_bottom_coil": {
+      "x": 1369.7,
+      "y": 2451.1,
+      "conf": 0.9999
+    },
+    "bottom_bottom_coil": {
+      "x": 1162.2,
+      "y": 2863.1,
+      "conf": 0.9988
+    },
+    "hook_tip_bottom": {
+      "x": 981.9,
+      "y": 2859.4,
+      "conf": 0.9985
+    }
+  },
+  "measurements": {
+    "total_length": {
+      "pixels": 2407.84,
+      "mm": 116.33,
+      "min": 119.5,
+      "max": 121.0,
+      "result": "FAIL"
+    },
+    "hook_length": {
+      "pixels": 2369.96,
+      "mm": 114.5,
+      "min": 115.5,
+      "max": 118.5,
+      "result": "FAIL"
+    }
+  },
+  "overall": "FAIL"
+}

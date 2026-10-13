@@ -1,0 +1,732 @@
+﻿
+==================== src\main.py ====================
+
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from src.controllers.calibration_controller import build_router as build_calibration_router
+from src.controllers.inspection_controller import build_router
+from src.services.config import load_config
+from src.services.calibration_service import CalibrationService
+from src.services.inspection_service import InspectionService
+
+config = load_config()
+inspection_service = InspectionService(config)
+calibration_service = CalibrationService(config)
+app = FastAPI(title="Spring Defect Detection API", version="0.1.0")
+app.include_router(build_router(inspection_service))
+app.include_router(build_calibration_router(calibration_service))
+app.mount("/reports", StaticFiles(directory="reports"), name="reports")
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "camera_mode": config["camera"]["mode"]}
+
+
+==================== src\classifier\spring_classifier.py ====================
+
+"""
+Production spring classifier.
+
+Pipeline:
+    image path
+        â†’ YOLO11 pose (V6-2) â†’ 7 keypoints
+        â†’ feature_extractor  â†’ 26 features
+        â†’ Random Forest      â†’ GOOD / BAD
+
+Usage:
+    from src.classifier.spring_classifier import SpringClassifier
+
+    clf = SpringClassifier()
+    result = clf.predict("path/to/image.jpg")
+    print(result)
+"""
+
+import sys
+import pathlib
+import pickle
+import numpy as np
+from typing import Dict, Any
+
+ROOT = pathlib.Path("D:/spring-defects")
+sys.path.insert(0, str(ROOT / "src"))
+
+from ultralytics import YOLO
+from features.feature_extractor import extract_features
+
+# â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+MODEL_PATH      = ROOT / "runs/pose/spring_pose_v6-2/weights/best.pt"
+CLASSIFIER_PATH = ROOT / "runs/features/classifier.pkl"
+KP_COLS         = [f"kp{i}_{c}" for i in range(7) for c in ("x", "y")]
+GEO_COLS        = [
+    "total_length_px",
+    "total_length_ratio",
+    "tilt_angle_deg",
+    "shaft_deviation_px",
+    "shaft_deviation_ratio",
+    "top_hook_offset_px",
+    "top_hook_offset_ratio",
+    "top_hook_angle_deg",
+    "bottom_hook_offset_px",
+    "bottom_hook_offset_ratio",
+    "bottom_hook_angle_deg",
+    "top_coil_gap_ratio",
+    "bottom_coil_gap_ratio",
+]
+
+
+def _normalize_keypoints(kp_xy: np.ndarray) -> dict:
+    """Translate to kpt0 origin, scale by kpt0â†’kpt6 distance."""
+    kp       = kp_xy[:, :2].astype(float)
+    origin   = kp[0]
+    safe_len = max(float(np.linalg.norm(kp[6] - kp[0])), 1.0)
+    normed   = (kp - origin) / safe_len
+    return {f"kp{i}_{c}": float(normed[i, j])
+            for i in range(7) for j, c in enumerate(("x", "y"))}
+
+
+class SpringClassifier:
+    """
+    Load once, call predict() for each image.
+
+    Parameters
+    ----------
+    model_path      : path to YOLO pose weights (.pt)
+    classifier_path : path to trained classifier (.pkl)
+    device          : YOLO inference device ("0", "cpu", etc.)
+    """
+
+    def __init__(
+        self,
+        model_path: pathlib.Path = MODEL_PATH,
+        classifier_path: pathlib.Path = CLASSIFIER_PATH,
+        device: str = "0",
+    ):
+        print(f"Loading YOLO model   : {model_path}")
+        self.yolo   = YOLO(str(model_path))
+        self.device = device
+
+        print(f"Loading classifier   : {classifier_path}")
+        with open(classifier_path, "rb") as f:
+            ckpt = pickle.load(f)
+
+        self.pipeline      = ckpt["pipeline"]
+        self.model_name    = ckpt["model_name"]
+        self.feature_cols  = ckpt["feature_cols"]
+        print(f"Classifier loaded    : {self.model_name}\n")
+
+    # â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+    def predict(self, image_path: str) -> Dict[str, Any]:
+        """
+        Run full pipeline on one image.
+
+        Parameters
+        ----------
+        image_path : str or Path to the image file
+
+        Returns
+        -------
+        dict with keys:
+            image         : filename
+            verdict       : "GOOD" or "BAD"
+            confidence    : probability of BAD class [0.0 â€“ 1.0]
+            keypoints     : list of 7 {x, y} dicts (absolute pixels)
+            features      : dict of 13 geometric features
+            error         : str or None (if detection failed)
+        """
+        image_path = pathlib.Path(image_path)
+
+        result_template = {
+            "image"     : image_path.name,
+            "verdict"   : None,
+            "confidence": None,
+            "keypoints" : None,
+            "features"  : None,
+            "error"     : None,
+        }
+
+        # â”€â”€ YOLO inference â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        results = self.yolo(str(image_path), verbose=False, device=self.device)
+        result  = results[0]
+
+        if (result.keypoints is None
+                or result.keypoints.xy is None
+                or len(result.keypoints.xy) == 0):
+            result_template["error"]   = "No spring detected"
+            result_template["verdict"] = "UNKNOWN"
+            return result_template
+
+        # â”€â”€ Pick best detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        if result.boxes is not None and len(result.boxes.conf) > 1:
+            best_idx = int(result.boxes.conf.argmax())
+        else:
+            best_idx = 0
+
+        kp_xy = result.keypoints.xy[best_idx].cpu().numpy()   # [7, 2]
+
+        if result.keypoints.conf is not None:
+            kp_vis = result.keypoints.conf[best_idx].cpu().numpy().reshape(-1, 1)
+        else:
+            kp_vis = np.ones((7, 1), dtype=float)
+
+        keypoints = np.concatenate([kp_xy, kp_vis], axis=1)   # [7, 3]
+
+        # â”€â”€ Extract features â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        img_h = result.orig_shape[0]
+
+        try:
+            geo = extract_features(keypoints)
+        except Exception as e:
+            result_template["error"]   = f"Feature extraction failed: {e}"
+            result_template["verdict"] = "UNKNOWN"
+            return result_template
+
+        geo["total_length_ratio"] = geo["total_length_px"] / max(img_h, 1)
+        kp_normed = _normalize_keypoints(keypoints)
+
+        # â”€â”€ Build feature vector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        feature_dict = {**geo, **kp_normed}
+        X = np.array([[feature_dict[col] for col in self.feature_cols]])
+
+        # â”€â”€ Classify â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        label = int(self.pipeline.predict(X)[0])
+
+        if hasattr(self.pipeline, "predict_proba"):
+            proba      = self.pipeline.predict_proba(X)[0]
+            confidence = float(proba[1])   # probability of BAD
+        else:
+            confidence = None
+
+        if confidence is not None:
+            if confidence >= 0.80:
+                verdict = "BAD"
+            elif confidence >= 0.50:
+                verdict = "MANUAL_CHECK"
+            else:
+                verdict = "GOOD"
+        else:
+            verdict = "BAD" if label == 1 else "GOOD"
+
+        return {
+            "image"     : image_path.name,
+            "verdict"   : verdict,
+            "confidence": confidence,
+            "keypoints" : [{"x": float(kp_xy[i, 0]),
+                            "y": float(kp_xy[i, 1])} for i in range(7)],
+            "features"  : {k: round(v, 4) for k, v in geo.items()},
+            "error"     : None,
+        }
+
+
+# â”€â”€ Quick test when run directly â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+if __name__ == "__main__":
+    import sys
+    import json
+
+    if len(sys.argv) < 2:
+        print("Usage: python spring_classifier.py <image_path>")
+        sys.exit(1)
+
+    clf    = SpringClassifier()
+    result = clf.predict(sys.argv[1])
+
+    print(f"\n{'=' * 50}")
+    print(f"  Image   : {result['image']}")
+    print(f"  Verdict : {result['verdict']}")
+    if result['confidence'] is not None:
+        print(f"  BAD probability : {result['confidence']:.3f}")
+    if result['error']:
+        print(f"  Error   : {result['error']}")
+    print(f"{'=' * 50}")
+
+    if result['features']:
+        print("\n  Key features:")
+        for k in ["total_length_ratio", "shaft_deviation_ratio",
+                  "top_hook_angle_deg", "bottom_hook_angle_deg"]:
+            print(f"    {k:<30} {result['features'].get(k, 'N/A')}")
+
+    print(f"\n  Full result:\n{json.dumps(result, indent=2)}")
+
+==================== src\models\schemas.py ====================
+
+from __future__ import annotations
+
+from datetime import datetime
+from enum import StrEnum
+from typing import Any
+from pydantic import BaseModel, Field
+
+
+class ModuleState(StrEnum):
+    PASS = "PASS"
+    FAIL = "FAIL"
+    SKIPPED = "SKIPPED"
+    ERROR = "ERROR"
+
+
+class ModuleResult(BaseModel):
+    module: int
+    state: ModuleState
+    message: str | None = None
+    metrics: dict[str, float] = Field(default_factory=dict)
+    artifacts: dict[str, str] = Field(default_factory=dict)
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class Failure(BaseModel):
+    module: int
+    reason: str
+    value: float | None = None
+    limits: dict[str, float] | None = None
+
+
+class InspectionResult(BaseModel):
+    inspection_id: str
+    timestamp: datetime
+    spring_id: str | None = None
+    batch_id: str | None = None
+    decision: ModuleState
+    failures: list[Failure] = Field(default_factory=list)
+    module_results: list[ModuleResult]
+    report_path: str | None = None
+
+
+class InspectRequest(BaseModel):
+    spring_id: str | None = None
+    batch_id: str | None = None
+    camera1_path: str | None = None
+    camera2_path: str | None = None
+    camera1_video_path: str | None = None
+    camera2_video_path: str | None = None
+
+
+class CalibrationRequest(BaseModel):
+    known_size_px: float = Field(gt=0, description="Measured pixel length of calibration reference")
+    known_size_mm: float = Field(gt=0, description="Physical length of that reference in millimetres")
+    apply: bool = Field(default=False, description="Persist the computed scale into config/tolerances.yaml")
+
+
+class CalibrationResult(BaseModel):
+    px_per_mm: float
+    mm_per_px: float
+    applied: bool
+
+
+==================== src\services\inspection_service.py ====================
+
+from __future__ import annotations
+
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
+import json
+from pathlib import Path
+from uuid import uuid4
+import cv2
+import numpy as np
+
+from src.camera.capture import CameraCaptureService
+from src.decision.engine import DecisionEngine
+from src.models.database import InspectionRepository
+from src.models.schemas import InspectRequest, InspectionResult, ModuleResult, ModuleState
+from src.models.yolo_detector import YOLOSpringDetector
+from src.models.yolo_pose import YOLOPoseInspector
+from src.modules.patchcore import PatchCoreInspector
+from src.preprocessing.preprocess import preprocess_camera1
+from src.reports.report_generator import DefectReportGenerator
+from src.video.frame_capture import BestFrameSelector
+
+
+class InspectionService:
+    """Application service (controller-independent orchestration)."""
+    def __init__(self, config: dict) -> None:
+        self.config = config
+        self.capture = CameraCaptureService(config)
+        self.detector = YOLOSpringDetector(config)
+        self.frame_selector = BestFrameSelector(config, self.detector)
+        self.patchcore = PatchCoreInspector(config)
+        self.pose = YOLOPoseInspector(config)
+        self.engine = DecisionEngine(config)
+        self.repo = InspectionRepository()
+        self.reports = DefectReportGenerator()
+
+    def inspect(self, request: InspectRequest) -> InspectionResult:
+        detection_result: ModuleResult
+        if request.camera1_video_path and request.camera2_video_path:
+            first = self.frame_selector.select(request.camera1_video_path)
+            second = self.frame_selector.select(request.camera2_video_path)
+            camera1, camera2 = first.frame, second.frame
+            detection_result = self._combine_detection_results(first.detection_result, second.detection_result)
+        else:
+            camera1, camera2 = self.capture.capture_pair(request.camera1_path, request.camera2_path)
+            first, _ = self.detector.detect(camera1)
+            second, _ = self.detector.detect(camera2)
+            detection_result = self._combine_detection_results(first, second)
+        prepared1, _ = preprocess_camera1(camera1)
+        with ThreadPoolExecutor(max_workers=self.config["inspection"]["max_parallel_workers"]) as pool:
+            one = pool.submit(self.patchcore.inspect, prepared1)
+            two = pool.submit(self.pose.inspect_front, camera1)
+            three = pool.submit(self.pose.inspect_top, camera2)
+            module_results = [detection_result, one.result(), two.result(), three.result()]
+        inspection_id = uuid4().hex
+        artifact_dir = Path("reports") / inspection_id
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        camera1_path, camera2_path = artifact_dir / "camera1.png", artifact_dir / "camera2.png"
+        cv2.imwrite(str(camera1_path), camera1); cv2.imwrite(str(camera2_path), camera2)
+        module_by_id = {result.module: result for result in module_results}
+        module_by_id[1].artifacts["camera1_source"] = str(camera1_path)
+        module_by_id[3].artifacts["camera2_source"] = str(camera2_path)
+        self._save_pose_overlay(module_by_id[2], artifact_dir, "camera1_keypoints.png")
+        self._save_anomaly_heatmap(module_by_id[1], artifact_dir)
+        self._save_pose_overlay(module_by_id[3], artifact_dir, "camera2_hooks.png")
+        decision, failures = self.engine.decide(module_results)
+        result = InspectionResult(inspection_id=inspection_id, timestamp=datetime.now(timezone.utc),
+            spring_id=request.spring_id, batch_id=request.batch_id, decision=decision,
+            failures=failures, module_results=module_results)
+        result.report_path = self.reports.generate(result)
+        self.repo.save(result, json.dumps(result.model_dump(mode="json")))
+        return result
+
+    @staticmethod
+    def _save_pose_overlay(result, folder: Path, filename: str) -> None:
+        overlay = result.details.pop("overlay", None)
+        if overlay is not None:
+            path = folder / filename
+            cv2.imwrite(str(path), np.asarray(overlay, dtype=np.uint8))
+            result.artifacts["keypoint_overlay"] = str(path)
+
+    @staticmethod
+    def _save_anomaly_heatmap(result, folder: Path) -> None:
+        anomaly_map = result.details.pop("anomaly_map", None)
+        if anomaly_map is not None:
+            heatmap = np.asarray(anomaly_map, dtype=np.float32)
+            heatmap = cv2.normalize(heatmap, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+            path = folder / "anomaly_heatmap.png"
+            cv2.imwrite(str(path), cv2.applyColorMap(heatmap, cv2.COLORMAP_JET))
+            result.artifacts["anomaly_heatmap"] = str(path)
+
+    @staticmethod
+    def _combine_detection_results(first: ModuleResult, second: ModuleResult) -> ModuleResult:
+        if first.state == ModuleState.SKIPPED and second.state == ModuleState.SKIPPED:
+            return ModuleResult(module=0, state=ModuleState.SKIPPED, message="YOLO spring detector disabled.")
+        if first.state == ModuleState.PASS and second.state == ModuleState.PASS:
+            return ModuleResult(module=0, state=ModuleState.PASS, metrics={"camera1_detection_confidence": first.metrics["detection_confidence"], "camera2_detection_confidence": second.metrics["detection_confidence"]})
+        messages = "; ".join(filter(None, [first.message, second.message]))
+        state = ModuleState.ERROR if ModuleState.ERROR in (first.state, second.state) else ModuleState.FAIL
+        return ModuleResult(module=0, state=state, message=messages or "Spring was not confirmed in both camera feeds.")
+
+
+==================== src\controllers\inspection_controller.py ====================
+
+from fastapi import APIRouter, HTTPException
+from src.models.schemas import InspectRequest, InspectionResult
+
+
+def build_router(service) -> APIRouter:
+    router = APIRouter(prefix="/api/v1/inspections", tags=["inspections"])
+
+    @router.post("", response_model=InspectionResult)
+    def inspect(request: InspectRequest) -> InspectionResult:
+        try:
+            return service.inspect(request)
+        except (ValueError, FileNotFoundError, RuntimeError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @router.post("/simulate", response_model=InspectionResult)
+    def simulate() -> InspectionResult:
+        return service.inspect(InspectRequest(spring_id="SIMULATED"))
+
+    @router.get("/latest")
+    def latest(limit: int = 20):
+        return [{"inspection_id": row.inspection_id, "timestamp": row.timestamp,
+                 "spring_id": row.spring_id, "batch_id": row.batch_id,
+                 "decision": row.decision, "report_path": row.report_path}
+                for row in service.repo.latest(limit)]
+
+    return router
+
+
+==================== src\decision\engine.py ====================
+
+from __future__ import annotations
+
+from src.models.schemas import Failure, ModuleResult, ModuleState
+
+
+class DecisionEngine:
+    def __init__(self, config: dict) -> None: self.config = config
+
+    def decide(self, results: list[ModuleResult]) -> tuple[ModuleState, list[Failure]]:
+        failures: list[Failure] = []
+        for result in results:
+            if result.state == ModuleState.SKIPPED:
+                if self.config["inspection"]["require_all_modules"]:
+                    failures.append(Failure(module=result.module, reason="Required inspection module was skipped"))
+                continue
+            if result.state == ModuleState.ERROR:
+                failures.append(Failure(module=result.module, reason=result.message or "Module error"))
+            elif result.state == ModuleState.FAIL:
+                self._add_module_failures(result, failures)
+        return (ModuleState.FAIL, failures) if failures else (ModuleState.PASS, failures)
+
+    @staticmethod
+    def _add_module_failures(result: ModuleResult, failures: list[Failure]) -> None:
+        if result.module == 0:
+            failures.append(Failure(module=0, reason=result.message or "Spring was not confirmed in both camera feeds."))
+        elif result.module == 1:
+            failures.append(Failure(module=1, reason="Visual anomaly detected", value=result.metrics.get("anomaly_score")))
+        elif result.module == 2:
+            for name in result.details.get("tolerance_failures", []):
+                failures.append(Failure(module=2, reason=f"{name} out of tolerance", value=result.metrics.get(name)))
+        elif result.module == 3:
+            if result.metrics.get("hook_alignment_error", 0) > result.details.get("threshold", float("inf")):
+                failures.append(Failure(module=3, reason="Hook angle mismatch", value=result.metrics.get("hook_alignment_error")))
+
+
+==================== src\views\dashboard.py ====================
+
+"""Streamlit view layer; run with `streamlit run src/views/dashboard.py`."""
+import json
+from urllib.request import urlopen, Request
+import streamlit as st
+
+BASE_URL = st.sidebar.text_input("API URL", "http://127.0.0.1:8000")
+st.title("Spring Inspection Dashboard")
+if st.button("Run simulated inspection"):
+    request = Request(f"{BASE_URL}/api/v1/inspections/simulate", method="POST")
+    with urlopen(request) as response:
+        st.session_state["latest"] = json.loads(response.read())
+latest = st.session_state.get("latest")
+if latest:
+    status = latest["decision"]
+    (st.success if status == "PASS" else st.error)(f"{status} â€” {latest['inspection_id']}")
+    st.json(latest)
+st.subheader("Recent inspections")
+try:
+    with urlopen(f"{BASE_URL}/api/v1/inspections/latest") as response: st.dataframe(json.loads(response.read()), use_container_width=True)
+except Exception:
+    st.info("Start the FastAPI service to view inspection history.")
+
+
+==================== src\camera\capture.py ====================
+
+from __future__ import annotations
+
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+import cv2
+import numpy as np
+
+
+class CameraCaptureService:
+    """Hardware adapter. Replace `capture_pair` for PLC/GPIO SDK triggering."""
+    def __init__(self, config: dict) -> None:
+        self.config = config
+
+    def capture_pair(self, camera1_path: str | None = None, camera2_path: str | None = None) -> tuple[np.ndarray, np.ndarray]:
+        if camera1_path and camera2_path:
+            return self._read(camera1_path), self._read(camera2_path)
+        if self.config["camera"]["mode"] == "simulation":
+            return self._simulated_front(), self._simulated_top()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            a = pool.submit(self._capture_one, self.config["camera"]["camera1_index"])
+            b = pool.submit(self._capture_one, self.config["camera"]["camera2_index"])
+            return a.result(), b.result()
+
+    @staticmethod
+    def _read(path: str) -> np.ndarray:
+        image = cv2.imread(str(Path(path)))
+        if image is None:
+            raise FileNotFoundError(f"Could not read image: {path}")
+        return image
+
+    @staticmethod
+    def _capture_one(index: int) -> np.ndarray:
+        cap = cv2.VideoCapture(index)
+        try:
+            ok, image = cap.read()
+            if not ok: raise RuntimeError(f"Camera {index} capture failed")
+            return image
+        finally:
+            cap.release()
+
+    @staticmethod
+    def _simulated_front() -> np.ndarray:
+        image = np.full((640, 640, 3), 245, dtype=np.uint8)
+        cv2.line(image, (320, 170), (320, 470), (20, 20, 20), 8)
+        for y in (145, 175, 465, 495): cv2.ellipse(image, (320, y), (65, 18), 0, 0, 360, (20, 20, 20), 7)
+        cv2.line(image, (255, 145), (220, 105), (20, 20, 20), 8); cv2.line(image, (385, 495), (420, 535), (20, 20, 20), 8)
+        return image
+
+    @staticmethod
+    def _simulated_top() -> np.ndarray:
+        image = np.full((640, 640, 3), 245, dtype=np.uint8)
+        cv2.circle(image, (320, 320), 130, (20, 20, 20), 9)
+        # Nominal spring: hook tips are in opposing angular directions.
+        cv2.line(image, (320, 190), (320, 95), (20, 20, 20), 9)
+        cv2.line(image, (320, 450), (320, 545), (20, 20, 20), 9)
+        return image
+
+
+==================== src\services\config.py ====================
+
+from __future__ import annotations
+
+from pathlib import Path
+import yaml
+
+
+def load_config(path: str = "config/tolerances.yaml") -> dict:
+    with Path(path).open(encoding="utf-8") as stream:
+        return yaml.safe_load(stream)
+
+
+==================== config\config.yaml ====================
+
+# Spring Defects Inspection System
+# System Configuration
+
+project:
+  name: spring-defects
+  version: "1.0"
+  camera: Camera 1
+
+# â”€â”€ Model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+model:
+  architecture: YOLO11n-pose
+  version: v6-2
+  weights: runs/pose/spring_pose_v6-2/weights/best.pt
+  input_size: 960
+  device: "0"
+  keypoints: 7
+  keypoint_names:
+    0: hook_tip_top
+    1: top_coil
+    2: bottom_top_coil
+    3: shaft_middle
+    4: top_bottom_coil
+    5: bottom_bottom_coil
+    6: hook_tip_bottom
+
+# â”€â”€ Classifier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+classifier:
+  type: RandomForest
+  weights: runs/features/classifier.pkl
+  features: 26
+  feature_breakdown:
+    geometric: 13
+    normalized_keypoints: 14
+  thresholds:
+    bad: 0.80          # above this â†’ AUTO REJECT
+    manual_check: 0.50 # above this â†’ MANUAL CHECK
+                       # below this â†’ AUTO PASS
+
+# â”€â”€ Performance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+performance:
+  training:
+    images: 500
+    good: 250
+    bad: 250
+    cross_val_folds: 5
+    accuracy: 93.8%
+    precision: 97.0%
+    recall: 91.6%
+  test:
+    images: 50
+    good: 33
+    bad: 17
+    recall: 100.0%
+    false_positives: 9
+    manual_check_zone: 7
+
+# â”€â”€ Keypoint model performance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+keypoint_model:
+  val_mAP50: 0.995
+  val_mAP50_95: 0.995
+  test_mean_pixel_error: 46.90
+  test_images: 50
+  training_images: 500
+  epochs_trained: 134
+
+# â”€â”€ Dataset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+dataset:
+  train:
+    path: data/yolo_pose/train/images
+    count: 250
+    format: .jpeg
+    resolution: 2400x3200
+  extra:
+    path: data/yolo_pose/extra/images
+    count: 250
+    format: .jpeg / .jpg
+    resolution: 2400x3200
+  val:
+    path: data/yolo_pose/val/images
+    count: 63
+  test:
+    path: data/yolo_pose/test/images
+    count: 62
+    resolution: mixed
+
+# â”€â”€ Defect types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+defects:
+  camera_1_visible:
+    - hook_open
+    - shaft_bent
+    - hook_alignment_visible
+    - spring_too_long
+  camera_1_invisible:
+    - hook_alignment_angle  # requires Camera 2
+
+# â”€â”€ Three-tier inspection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+inspection:
+  auto_pass:
+    condition: BAD probability < 0.50
+    action: ship to customer
+  manual_check:
+    condition: BAD probability 0.50 - 0.80
+    action: human visual inspection
+  auto_reject:
+    condition: BAD probability > 0.80
+    action: reject / scrap
+
+==================== requirements.txt ====================
+
+fastapi>=0.110
+uvicorn[standard]>=0.27
+opencv-python>=4.9
+numpy>=1.26
+PyYAML>=6.0
+SQLAlchemy>=2.0
+pydantic>=2.0
+streamlit>=1.32
+Pillow>=10.0
+ultralytics>=8.3
+# GPU training/runtime packages:
+# torch torchvision anomalib
+
+
+==================== Dockerfile ====================
+
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+ENV PYTHONPATH=/app
+EXPOSE 8000
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+
+==================== docker-compose.yml ====================
+
+services:
+  inspection-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+      - ./config:/app/config
+
