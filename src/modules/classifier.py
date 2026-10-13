@@ -16,7 +16,7 @@ GOOD_LABELS = {"GOOD", "OK", "PASS"}
 
 class SpringClassifier:
     def __init__(self, weights=DEFAULT_WEIGHTS, imgsz=None, device=None,
-                 uncertain_threshold: float = 0.0):
+                 uncertain_threshold: float = 0.70):
         weights = Path(weights)
         if not weights.exists():
             raise FileNotFoundError(f"Weights not found: {weights}")
