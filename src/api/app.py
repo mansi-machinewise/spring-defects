@@ -17,8 +17,8 @@ from src.modules.classifier import SpringClassifier
 
 ROOT = Path(__file__).resolve().parents[2]
 WEIGHTS = os.getenv("SPRING_WEIGHTS",
-                    str(ROOT / "runs/classify/spring_cls_v1/weights/best.pt"))
-UNCERTAIN_THRESHOLD = float(os.getenv("SPRING_UNCERTAIN", "0.0"))
+                    str(ROOT / "runs/classify/spring_cls_v4/weights/best.pt"))
+UNCERTAIN_THRESHOLD = float(os.getenv("SPRING_UNCERTAIN", "0.70"))
 MAX_BYTES = 15 * 1024 * 1024
 
 state = {}
