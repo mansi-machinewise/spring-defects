@@ -1,0 +1,15 @@
+path: C:/Users/OM/OneDrive/Desktop/springtop/yolo_pose_dataset
+train: train/images
+val: val/images
+test: test/images
+kpt_shape:
+- 4
+- 3
+flip_idx:
+- 0
+- 1
+- 2
+- 3
+names:
+  0: good_spring
+  1: bad_spring
