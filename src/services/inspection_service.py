@@ -20,6 +20,7 @@ from src.models.schemas import (
 )
 from src.models.yolo_detector import YOLOSpringDetector
 from src.models.yolo_pose import YOLOPoseInspector
+from src.modules.classifier import SpringClassifier
 from src.modules.patchcore import PatchCoreInspector
 from src.reports.report_generator import DefectReportGenerator
 from src.video.frame_capture import BestFrameSelector
@@ -32,14 +33,26 @@ class InspectionService:
         self.config = config
 
         self.capture = CameraCaptureService(config)
+
         self.detector = YOLOSpringDetector(config)
+
         self.frame_selector = BestFrameSelector(
             config,
             self.detector,
         )
+
         self.patchcore = PatchCoreInspector(config)
+
+        # Camera 1 classifier:
+        # GOOD -> ACCEPT
+        # DEFECTIVE -> REJECT
+        # UNCERTAIN -> FAIL
+        self.classifier = SpringClassifier()
+
         self.pose = YOLOPoseInspector(config)
+
         self.engine = DecisionEngine(config)
+
         self.repo = InspectionRepository()
         self.reports = DefectReportGenerator()
 
@@ -97,7 +110,7 @@ class InspectionService:
         )
 
         # If Camera 1 detection failed, PatchCore cannot localize
-        # the three spring regions.
+        # the three spring regions and the inspection stops here.
         if detection_bbox is None:
 
             module_results = [
@@ -132,13 +145,47 @@ class InspectionService:
             return result
 
         # ---------------------------------------------------------
-        # 3. Run PatchCore + Pose modules
+        # 3. Run classifier on Camera 1
+        # ---------------------------------------------------------
+        classifier_output = self.classifier.predict(
+            camera1
+        )
+
+        classifier_state = (
+            ModuleState.PASS
+            if classifier_output["decision"] == "ACCEPT"
+            else ModuleState.FAIL
+        )
+
+        classifier_result = ModuleResult(
+            module=4,
+            state=classifier_state,
+            metrics={
+                "classifier_confidence": float(
+                    classifier_output["confidence"]
+                ),
+                "classifier_inference_ms": float(
+                    classifier_output["inference_ms"]
+                ),
+            },
+            details={
+                "prediction": classifier_output["prediction"],
+                "decision": classifier_output["decision"],
+                "probabilities": classifier_output["probabilities"],
+            },
+        )
+
+        # ---------------------------------------------------------
+        # 4. Run PatchCore + Pose modules
         #
-        # IMPORTANT:
-        # PatchCore receives the ORIGINAL Camera 1 image.
-        # It then uses the YOLO bounding box to create:
-        #   upper / shaft / lower
-        # regional crops.
+        # PatchCore:
+        #   Localization only
+        #
+        # Front Pose:
+        #   Geometric/tolerance inspection
+        #
+        # Top Pose:
+        #   Hook/coil geometry inspection
         # ---------------------------------------------------------
         with ThreadPoolExecutor(
             max_workers=self.config["inspection"][
@@ -167,10 +214,11 @@ class InspectionService:
                 one.result(),
                 two.result(),
                 three.result(),
+                classifier_result,
             ]
 
         # ---------------------------------------------------------
-        # 4. Save inspection artifacts
+        # 5. Save inspection artifacts
         # ---------------------------------------------------------
         inspection_id = uuid4().hex
 
@@ -205,7 +253,7 @@ class InspectionService:
         )
 
         # ---------------------------------------------------------
-        # 5. Map module results by module ID
+        # 6. Map module results by module ID
         # ---------------------------------------------------------
         module_by_id = {
             result.module: result
@@ -223,7 +271,7 @@ class InspectionService:
         ] = str(camera2_path)
 
         # ---------------------------------------------------------
-        # 6. Save pose overlays
+        # 7. Save pose overlays
         # ---------------------------------------------------------
         self._save_pose_overlay(
             module_by_id[2],
@@ -238,7 +286,11 @@ class InspectionService:
         )
 
         # ---------------------------------------------------------
-        # 7. Save PatchCore anomaly heatmaps
+        # 8. Save PatchCore anomaly heatmaps
+        #
+        # PatchCore is localization only.
+        # Its anomaly result does NOT determine the final
+        # GOOD/BAD decision.
         # ---------------------------------------------------------
         self._save_anomaly_heatmap(
             module_by_id[1],
@@ -246,7 +298,14 @@ class InspectionService:
         )
 
         # ---------------------------------------------------------
-        # 8. Final decision
+        # 9. Final decision
+        #
+        # DecisionEngine:
+        #   Module 0 -> detection
+        #   Module 1 -> PatchCore localization only
+        #   Module 2 -> front pose
+        #   Module 3 -> top pose
+        #   Module 4 -> classifier GOOD/BAD
         # ---------------------------------------------------------
         decision, failures = self.engine.decide(
             module_results
@@ -263,7 +322,7 @@ class InspectionService:
         )
 
         # ---------------------------------------------------------
-        # 9. Generate report and save result
+        # 10. Generate report and save result
         # ---------------------------------------------------------
         result.report_path = self.reports.generate(
             result
